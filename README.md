@@ -1,41 +1,87 @@
 
-# EnvRtype: a tool for envirotyping analysis and genomic prediction considering reaction norms
+# [EnvRtype](https://github.com/allogamous/EnvRtype): a tool for envirotyping analysis and genomic prediction considering reaction norms
 
-Authorship: [Allogamous Plant Breeding Lab (University of São Paulo, ESALQ/USP, Brazil)](http://www.genetica.esalq.usp.br/en/lab/allogamous-plant-breeding-laboratory)
+<p align="center">
+  <img src="/fig/logo.png" width="70%" height="70%">
+</p>
 
-Manteiner: [Germano Costa Neto](https://github.com/gcostaneto)
+<div id="menu" />
 
-[Simplified Tutorial (R script)](https://raw.githubusercontent.com/allogamous/EnvRtype/master/tutorial_script_R.R)
-
-
-
-
-
+---------------------------------------------
 
 ## Background
 
-Environmental typing (envirotyping) has proven useful in identifying the non-genetic drivers of phenotypic adaptation in plant breeding. Combined with phenotyping and genotyping data, the use of envirotyping data may leverage the molecular breeding strategies to cope with environmental changing scenarios. Over the last ten years, this data has been incorporated in genomic-enabled prediction models aiming to better model genotype x environment interaction (GE) as a function of reaction norm. However, there is difficult for most breeders to deal with the interplay between envirotyping, ecophysiology, and genetics. Here we present the EnvRtype R package as a new toolkit developed to facilitate the interplay between envirotyping and genomic prediction. This package offers three modules: (1) collection and processing data set, (2) environmental characterization, (3) build of ecophysiological enriched genomic prediction models accounting for three different structures of reaction norm. Here we focus our efforts to present a practical use of EnvRtype package in supporting the genome-wide prediction of reaction norms. We provide a intuitive framework to integrate different reaction norm models in Bayesian Genomic Genotype x Environment Interaction (BGGE) package.
+> Environmental typing (envirotyping) has proven useful in identifying the non-genetic drivers of phenotypic adaptation in plant breeding. Combined with phenotyping and genotyping data, the use of envirotyping data may leverage the molecular breeding strategies to cope with environmental changing scenarios. Over the last ten years, this data has been incorporated in genomic-enabled prediction models aiming to better model genotype x environment interaction (GE) as a function of reaction norm. However, there is difficult for most breeders to deal with the interplay between envirotyping, ecophysiology, and genetics. 
+> Here we present the EnvRtype R package as a new toolkit developed to facilitate the interplay between envirotyping and genomic prediction. This package offers three modules: (1) collection and processing data set, (2) environmental characterization, (3) build of ecophysiological enriched genomic prediction models accounting for three different structures of reaction norm. Here we focus our efforts to present a practical use of EnvRtype package in supporting the genome-wide prediction of reaction norms. We provide a intuitive framework to integrate different reaction norm models in Bayesian Genomic Genotype x Environment Interaction (BGGE) package.
 
-## **Features and Functionality**
+<div id="menu" />
 
-EnvRtype consists of the following three modules, which collectively generate a simple workflow to collect, process and integrated envirotyping into genomic prediction in multiple environments.
+---------------------------------------------
+## Resources
 
-- [Environmental Sensing Module (ES)](#heading1)
-  * [Basic summary statistics for environmental data](#sub-heading)
-- [Environmental Characterization Module (EC)](#heading)
-  * [Environmental Typologies based on Cardinal Limits](#sub-heading)
-- [Reaction Norm Module (RN)](#heading)
+> EnvRtype consists in three modules (sections 2-4), which collectively generate a simple workflow to collect, process and integrates envirotyping data into genomic prediction over multiple environments.
+  
+   * [1. Install and Required Packages](#Instal)
+   * [2. Environmental Sensing Module](#P1)
+   * [3. Environmental Characterization Module](#P2)
+   * [4. Reaction Norm Module](#P3)
+   * [5.Authorship](#P4)
+   * [6. Acknowledgments](#P5)
+   * [7. Simplified R script (Tutorial)](#P6)
+   
 
+<div id="Instal" />
 
-## Install
+## 1. Install
 ```{r}
 library(devtools)
 install_github('allogamous/EnvRtype')
 require(EnvRtype)
+
+#if the method above doesn't work, use the next lines by downloading the EnvRtype-master.zip file
+
+setwd("~/.zip file") # or download directory
+
+unzip("EnvRtype-master.zip") 
+
+file.rename("EnvRtype-master", "EnvRtype") 
+
+shell("R CMD build EnvRtype")
+
+```
+**Required packages**
+
+
+> * **[EnvRtype](https://github.com/allogamous/EnvRtype)** 
+> * **[raster](https://CRAN.R-project.org/package=raster)** 
+> * **[nasapower](https://github.com/ropensci/nasapower)** 
+> * **[BGGE](https://github.com/italo-granato/BGGE)**
+> * **[foreach](https://github.com/cran/foreach)**
+> * **[doParalell](https://github.com/cran/doparallel)**
+
+```r
+install.packages("foreach")
+install.packages("doParallel")
+install.packages("raster")
+install.packages("nasapower")
+install.packages("BGGE")
+
+or
+
+source("https://raw.githubusercontent.com/gcostaneto/Funcoes_naive/master/instpackage.R");
+
+inst.package(c("BGGE",'foreach','doParalell','raster','nasapower'));
+
+library(EnvRtype)
+
 ```
 <!-- toc -->
 
-# Environmental Sensing Module (ES)
+[Menu](#menu)
+
+<div id="P1" />
+
+## 2. Environmental Sensing Module
 ```{r}
 lat = c(-13.05,-12.32,-18.34,-18.90,-23.03) # vector of latitude WGS84
 lon = c(-56.05,-55.42,-46.31,-49.56,-51.02) # vector of lontitude WGS84
@@ -52,7 +98,7 @@ df.clim <- get_weather(env.id = env,lat = lat,lon = lon,
                        start.day = plant.date,end.day = harv.date, asdataframe = F) # returns a list of dataframes by environments
 
 df.clim <- get_weather(env.id = env,lat = lat,lon = lon,
-                       start.day = plant.date,end.day = harv.date) # returns a dataframe with all environments by default
+                       start.day = plant.date,end.day = harv.date,country = 'BRA') # returns a dataframe with all environments by default
                        
 head(df.clim)
 
@@ -61,7 +107,7 @@ head(df.clim)
 ```{r}
 df.clim <-processWTH(x = df.clim,lon = 'LON',lat = 'LAT',env.id = 'env',download.ALT = TRUE,country = 'BRA')
 ```
-## Basic summary statistics for environmental data
+### Basic summary statistics for environmental data
 ```{r}
 summaryWTH(df.clim)
 summaryWTH(df.clim,env.id = 'env')
@@ -104,7 +150,7 @@ summaryWTH(df.clim,env.id = 'env',statistic = 'quantile')
 summaryWTH(df.clim,env.id = 'env',statistic = 'quantile',probs = c(.20,.76,.90))
 ```
 
-## **Module II: Building Environmental Covariable Matrices**
+### Building Environmental Covariable Matrices
 
 - Mean-centered and scaled matrix
 ```{r}
@@ -148,9 +194,13 @@ W.matrix(df.cov = df.clim,var.id = id.var)
 data<-summaryWTH(df.clim,env.id = 'env',statistic = 'quantile')
 W.matrix(df.cov = data,is.processed = T)
 ```
-# Environmental Characterization Module (EC)
+[Menu](#menu)
 
-## Environmental Typologies based on Cardinal Limits
+<div id="P2" />
+
+## 3. Environmental Characterization Module
+
+### Environmental Typologies based on Cardinal Limits
 
 ```{r}
 EnvTyping(df.cov = df.clim,env.id = 'env',var.id='T2M')
@@ -237,8 +287,13 @@ EnvTyping(df.cov = df.clim,var.id =  c('T2M','PRECTOT','WS2M'),
 EnvTyping(df.cov = df.clim,var.id = 'PRECTOT',env.id='env',scale = T)
 EnvTyping(df.cov = df.clim,var.id =  c('T2M','PRECTOT','WS2M'),env.id='env',scale = T) 
 ```
+[Menu](#menu)
 
-# Reaction Norm Module (RN)
+<div id="P3" />
+
+------------------------------------------------------------
+
+# 3. Reaction Norm Module
 
 We provide Genomic and Envirotypic kernels for reaction norm prediction. After generate the kernels, the user must use the [BGGE](https://github.com/italo-granato/BGGE) package to run the models
 
@@ -431,4 +486,53 @@ require(BGGE)
                   thin = 2,
                   verbose = TRUE)
 ```
+
+
+<div id="P4" />
+
+------------------------------------------------------------
+
+## 5. Authorship
+
+This package is a initiative from the [Allogamous Plant Breeding Lab (University of São Paulo, ESALQ/USP, Brazil)](http://www.genetica.esalq.usp.br/en/lab/allogamous-plant-breeding-laboratory).
+
+**Developer**
+
+> * [Germano Costa Neto](https://github.com/gcostaneto), PhD Candidate in Genetics and Plant Breeding
+
+> * [Giovanni Galli](https://github.com/giovannigalli), PhD in Genetics and Plant Breeding
+
+> * [Humberto Fanelli](https://github.com/humbertofanelli), PhD in Genetics and Plant Breeding
+
+> * [Roberto Fritsche-Neto](roberto.neto@usp.br), PhD Candidate in Genetics and Plant Breeding
+
+<div id="P5" />
+
+------------------------------------------------------------
+
+## 6. Acknowledgments
+
+> * [Giovanni Galli](https://github.com/giovannigalli), PhD in Genetics and Plant Breeding
+
+> * [Humberto Fanelli](https://github.com/humbertofanelli), PhD in Genetics and Plant Breeding
+
+> * [University of São Paulo (ESALQ/USP)](https://www.esalq.usp.br/)
+
+> * [Conselho Nacional de Desenvolvimento Científico e Tecnológico](http://www.cnpq.br/) for the PhD scholarship granted to the authors of the package
+
+> * [Pedro L. Longhin](https://github.com/pedro-longhin) for additional support in Git Hub
+
+<div id="P6" />
+
+------------------------------------------------------------
+
+## 7. Simplified R script (Tutorial)
+
+[Simplified Tutorial (R script)](https://raw.githubusercontent.com/allogamous/EnvRtype/master/tutorial_script_R.R)
+
+
+
 <img align="right" width="110" height="100" src="/fig/logo_alogamas.png">
+
+
+<div id="menu" />
