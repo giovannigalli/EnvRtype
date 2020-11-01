@@ -4,7 +4,7 @@
 #' @description Returns environmental typologies that can be used as envirotype markers. This typologies are given based on cardinals (discrete intervals for each variable). The user must inform the name of the environmental variables of interest and inform the cardinal option as list of cardinal vectors for each variable. Its also possible to fix intervals or scale data.
 #' @author Germano Costa Neto
 #'
-#' @param weather.data data.frame of environmental variables gotten from \code{get_weather()}.
+#' @param env.data data.frame of environmental variables gotten from \code{get_weather()}.
 #' @param id.names vector (character). Indicates the name of the columns to be used as id for the environmental variables to be analysed.
 #' @param env.id   vector (character). Indicates the name of the columns to be used as id for environments.
 #' @param var.id  character. Indicates which variables will be used in the analysis.
@@ -25,20 +25,20 @@
 #'
 #' @examples
 #' ### Fetching weather information from NASA-POWER
-#' weather.data = get_weather(lat = -13.05, lon = -56.05, country = 'BRA')
+#' env.data = get_weather(lat = -13.05, lon = -56.05)
 #'
 #' ### By.intervals (generic time intervals)
-#' EnvTyping(weather.data = weather.data, env.id = 'env', var.id = 'T2M', by.interval = TRUE)
+#' env_typing(env.data = env.data, env.id = 'env', var.id = 'T2M', by.interval = TRUE)
 #'
 #' ### By.intervals (specific time intervals)
-#' EnvTyping(weather.data = weather.data,
+#' env_typing(env.data = env.data,
 #'           env.id = 'env',
 #'           var.id = 'T2M',
 #'           by.interval = TRUE,
 #'           time.window = c(0, 15, 35, 65, 90, 120))
 #'
 #' ### By.intervals (specific time intervals and with specific names
-#' EnvTyping(weather.data = weather.data,
+#' env_typing(env.data = env.data,
 #'                  env.id = 'env',
 #'                  var.id = 'T2M',
 #'                  by.interval = TRUE,
@@ -51,7 +51,7 @@
 #'                                   '6-maturation'))
 #'
 #' ### With set cardinals.
-#' EnvTyping(weather.data = weather.data,
+#' env_typing(env.data = env.data,
 #'           var.id = c('T2M','PRECTOT','WS2M'),
 #'           cardinals = list(T2M = c(0, 9, 22, 32, 45),
 #'                            PRECTOT = c(0, 5, 10),
@@ -64,7 +64,7 @@
 #'
 #' @export
 
-EnvTyping <- function(weather.data,var.id,env.id,cardinals=NULL,days.id=NULL,
+env_typing <- function(env.data,var.id,env.id,cardinals=NULL,days.id=NULL,
                       time.window=NULL,names.window=NULL,quantiles=NULL,
                       id.names=NULL,by.interval=FALSE,scale=FALSE,
                       format=NULL){
@@ -75,14 +75,14 @@ EnvTyping <- function(weather.data,var.id,env.id,cardinals=NULL,days.id=NULL,
   '%:%' <- foreach::'%:%'
   '%dopar%' <- foreach::'%dopar%'
 
-  if(isTRUE(scale)) weather.data[,var.id] <- scale(weather.data[,var.id],center = TRUE,scale = TRUE)
+  if(isTRUE(scale)) env.data[,var.id] <- scale(env.data[,var.id],center = TRUE,scale = TRUE)
 
-  .GET <- meltWTH(.GeTw = weather.data,days = days.id,
-                     by.interval = by.interval,
-                     time.window = time.window,
-                     names.window = names.window,
-                     id.names =  id.names,var.id = var.id,
-                     env.id=env.id)
+  .GET <- meltWTH(.GeTw = env.data,days = days.id,
+                  by.interval = by.interval,
+                  time.window = time.window,
+                  names.window = names.window,
+                  id.names =  id.names,var.id = var.id,
+                  env.id=env.id)
 
   if(isFALSE(by.interval)) .GET <-data.frame(.GET,interval='full-cycle')
   env <- as.character(unique(.GET$env))
@@ -109,11 +109,11 @@ EnvTyping <- function(weather.data,var.id,env.id,cardinals=NULL,days.id=NULL,
 
   results <- foreach::foreach(s=1:length(vars), .combine = "rbind") %:% foreach::foreach(j=1:length(env), .combine = "rbind") %:% foreach::foreach(t=1:length(int), .combine = "rbind") %dopar% {
 
-      .out=data.frame(table(cut(x =  .GET$value[which(.GET$env == env[j] & .GET$variable == vars[s] & .GET$interval == int[t])],
-                                breaks = cardinals[[s]],right = TRUE)),env=env[j],interval=int[t],var=vars[s])
+    .out=data.frame(table(cut(x =  .GET$value[which(.GET$env == env[j] & .GET$variable == vars[s] & .GET$interval == int[t])],
+                              breaks = cardinals[[s]],right = TRUE)),env=env[j],interval=int[t],var=vars[s])
 
-      return(.out)
-    }
+    return(.out)
+  }
   names(results)[1] <- 'env.variable'
   results$env.variable <- paste0(results$var,'_',results$env.variable)
   if(isTRUE(by.interval))  results$env.variable <- paste0(results$env.variable,'_',results$interval)

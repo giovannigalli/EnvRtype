@@ -37,7 +37,7 @@
 #' ## Temperature for a single location:
 #' get_weather(env.id = "NM", lat = -13.05, lon = -56.05,
 #'             start.day = "2015-02-15", end.day = "2015-06-15",
-#'             variables.names = c("T2M"), country = 'BRA')
+#'             variables.names = c("T2M"))
 #'
 #' ## All variables for two locations:
 #' env = c("NM","SO")
@@ -45,8 +45,7 @@
 #' plant.date = c("2015-02-15",'2015-02-13')
 #' harv.date = rep("2015-06-15", 2)
 #' get_weather(env.id = env, lat = lat, lon = lon,
-#'             start.day = plant.date, end.day = harv.date,
-#'             country = 'BRA')
+#'             start.day = plant.date, end.day = harv.date)
 #'
 #' @references
 #' Sparks A (2019). _nasapower: NASA-POWER Data from R_. R package version 1.1.3, <URL:https://CRAN.R-project.org/package=nasapower>.
@@ -63,85 +62,67 @@
 # adaptation from nansapower package's get_power function
 #----------------------------------------------------------------------------------------
 
-get_weather = function(env.id = NULL,lat   = NULL,lon   = NULL,
-                           start.day = NULL,end.day = NULL,
-                           variables.names = NULL, dir.path = NULL,
-                           save=FALSE,temporal.scale = 'DAILY', country = NULL){
-  cat('------------------------------------------------ \n')
-  cat('ATTENTION: This function requires internet access \n')
-  cat('------------------------------------------------  \n')
-
-  # checking in inputs
-  if(is.null(env.id)){env.id <- paste0("env", seq_along(lat))} #creates a name for the enviroments (if null)
-  if(!(is.character(env.id) || is.factor(env.id)))
-     {stop("env.id should be a vector of characters (e.g. 'env1') or factors")} #checks if env.id is character of factors
-
-  # if nasapower is not installed, the CRAN version will be installed
-  if (!requireNamespace('nasapower', quietly = TRUE)) {utils::install.packages("nasapower")} #talvez seja interessante instalar junto com o pacote
-  if (!requireNamespace('plyr', quietly = TRUE)) {utils::install.packages("plyr")}
-
-  # if output dir.path is null, the current directorie folder will be used
-  if(is.null(dir.path)){dir.path = getwd()}
-
-  # if start.day is null, current day - 1000 days
-  if(is.null(start.day))
-    {
-    start.day<- Sys.Date()-1000
-    cat(paste0('start.day is NULL','\n'))
-    cat(paste0('matched as ',start.day,'\n'))
-    }
-
-  # if end.day is null, start.day + 30
-  if(is.null(end.day))
-  {
-    end.day<- start.day+30
-    cat(paste0('end.day is NULL','\n'))
-    cat(paste0('matched as ',end.day,'\n'))
+get_weather = function (env.id = NULL, lat = NULL, lon = NULL, start.day = NULL, 
+                        end.day = NULL, variables.names = NULL, dir.path = NULL, 
+                        save = FALSE, temporal.scale = "DAILY", country = NULL) 
+{
+  cat("------------------------------------------------ \n")
+  cat("ATTENTION: This function requires internet access \n")
+  cat("------------------------------------------------  \n")
+  if (is.null(env.id)) {
+    env.id <- paste0("env", seq_along(lat))
   }
-
-  # if variables is null, the default list will be used
-  if(is.null(variables.names)){
-    variables.names = c("T2M","T2M_MAX","T2M_MIN","PRECTOT",
-                   "WS2M","RH2M","T2MDEW","ALLSKY_SFC_LW_DWN",
-                   "ALLSKY_SFC_SW_DWN","ALLSKY_TOA_SW_DWN")
+  if (!(is.character(env.id) || is.factor(env.id))) {
+    stop("env.id should be a vector of characters (e.g. 'env1') or factors")
   }
-
-  # preapring outputs
+  if (!requireNamespace("nasapower", quietly = TRUE)) {
+    utils::install.packages("nasapower")
+  }
+  if (!requireNamespace("plyr", quietly = TRUE)) {
+    utils::install.packages("plyr")
+  }
+  if (is.null(dir.path)) {
+    dir.path = getwd()
+  }
+  if (is.null(start.day)) {
+    start.day <- Sys.Date() - 1000
+    cat(paste0("start.day is NULL", "\n"))
+    cat(paste0("matched as ", start.day, "\n"))
+  }
+  if (is.null(end.day)) {
+    end.day <- start.day + 30
+    cat(paste0("end.day is NULL", "\n"))
+    cat(paste0("matched as ", end.day, "\n"))
+  }
+  if (is.null(variables.names)) {
+    variables.names = c("T2M", "T2M_MAX", "T2M_MIN", "PRECTOT", 
+                        "WS2M", "RH2M", "T2MDEW", "ALLSKY_SFC_LW_DWN", "ALLSKY_SFC_SW_DWN", 
+                        "ALLSKY_TOA_SW_DWN")
+  }
   env.id = as.factor(env.id)
-  .Ne    = length(env.id)
-  .C     = vector(length = .Ne,"list")
-
-  for(.E in 1:.Ne){
-    CL = data.frame(nasapower::get_power(community = "AG",lonlat = c(lon[.E], lat[.E]),
-                                         pars = variables.names,
-                                         dates = c(start.day[.E],end.day[.E]),
-                                         temporal_average = temporal.scale))
+  .Ne = length(env.id)
+  .C = vector(length = .Ne, "list")
+  for (.E in 1:.Ne) {
+    CL = data.frame(nasapower::get_power(community = "AG", 
+                                         lonlat = c(lon[.E], lat[.E]), pars = variables.names, 
+                                         dates = c(start.day[.E], end.day[.E]), temporal_average = temporal.scale))
     CL$daysFromStart = 1:nrow(CL)
     .C[[.E]] = CL
     names(.C)[[.E]] = env.id[.E]
-
-    # if save is true, write the weather into csv files
-    if(isTRUE(save)){utils::write.csv(file=paste(env.id[.E],".csv",sep=""), x = CL)}
-
-    cat(paste0('Environment ', env.id[.E], ' downloaded \n'))
-
+    if (isTRUE(save)) {
+      utils::write.csv(file = paste(env.id[.E], ".csv", 
+                                    sep = ""), x = CL)
+    }
+    cat(paste0("Environment ", env.id[.E], " downloaded \n"))
   }
-
   names(.C) = env.id
-
-  #Talvez seja interessante trabalhar somente com dataframe (facilita o binding com a altitude)
-  # if asdataframe is true, df_convert function will be used
-  # if(isTRUE(asdataframe))
   .C = plyr::ldply(.C)
-  names(.C)[names(.C) %in% '.id'] = 'env'
-
-  ###section from processWTH.R
-  if(is.null(country)) stop('Please inform the country in which the experiments were carried. Run this function for each country.')
-  if(!requireNamespace('raster')) utils::install.packages("raster")
-
-  # collecting altitude data from raster SRTM database
-  srtm <- raster::getData('alt', country=country,mask=TRUE)
-  df<-Extract_GIS(covraster = srtm, weather.data = .C) #nao ha input para covname, talvez seja interessante remove-lo
-
+  names(.C)[names(.C) %in% ".id"] = "env"
+  df <- .C
+  try(if (!is.null(country)) {
+    if (!requireNamespace("raster")) 
+      utils::install.packages("raster")
+    df <- extract_GIS(covraster = raster::getData("alt", country = country, mask = TRUE), Latitude = 'LAT', Longitude = 'LON',env.id = 'env',name.out = 'ALT',env.data = df)
+  })
   return(df)
 }

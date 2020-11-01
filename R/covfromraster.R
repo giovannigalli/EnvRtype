@@ -5,7 +5,11 @@
 #' @author Germano Costa Neto
 #'
 #' @param covraster RasterLayer. A raster from which data is going to be extracted.
-#' @param weather.data data.frame. A \code{get_weather} output.
+#' @param env.data data.frame. A \code{get_weather} output.
+#' @param Latitude character, the name of latitude column in env.data
+#' @param Longitude character, the name of longitude column in env.data
+#' @param env.id character, the name of environmental identification column in env.data
+#' @param name.out character, output name
 #'
 #' @return
 #' The original dataframe with additional geographic/weather information.
@@ -15,42 +19,29 @@
 #'
 #' @examples
 #' # TODO
-# weather.data = get_weather(lat = -13.05, lon = -56.05, country = 'BRA')
+# env.data = get_weather(lat = -13.05, lon = -56.05, country = 'BRA')
 # srtm = raster::getData('worldclim', var='tmin', lat = -13.05, lon = -56.05, res = 0.5)
-# weather.data = Extract_GIS(covraster = srtm, weather.data = weather.data)
+# env.data = extract_GIS(covraster = srtm, env.data = env.data)
 #'
 #' @importFrom raster extract merge
 #' @importFrom sp proj4string CRS coordinates<- proj4string<- coordinates
 #'
 #' @export
 
-Extract_GIS <- function(covraster=NULL,weather.data=NULL){
-
-  loc  = data.frame(x=weather.data[,'LON'],y=weather.data[,'LAT'])
-  env = weather.data[,'env']
+extract_GIS <- function(covraster=NULL,Latitude=NULL, Longitude=NULL,env.data=NULL,env.id=NULL,name.out = NULL){
+  
+  if(is.null(name.out)) name.out = 'ALT'
+  if(is.null(Latitude)) Latitude <- 'LAT'
+  if(is.null(Longitude)) Longitude <-'LON'
+  if(is.null(env.id)) env.id <- 'env'
+  loc  = data.frame(x=env.data[,Longitude],y=env.data[,Latitude])
+  env = env.data[,env.id]
   sp::coordinates(loc)= ~x+y
   sp::proj4string(loc) = sp::CRS("+proj=longlat +datum=WGS84") # acho interessante colocar essa informacao no help da funcao.
-
+  
   for(i in 1:length(names(covraster))) env = cbind(env,data.frame(raster::extract(covraster[[i]], loc)))
   names(env)[-1] = names(covraster)
   env<-data.frame(unique(env))
-  names(env)[!names(env) %in% 'env'] <- 'ALT'
-  return(raster::merge(env,weather.data,by='env'))
+  names(env)[!names(env) %in% env.id] <- name.out
+  return(raster::merge(env,env.data,by=env.id))
 }
-#RasterToCov <-function(raster=NULL,weather.data=NULL, lon=NULL,
-                     #    lat=NULL, env.id=NULL, .crs=NULL,.path=NUL,covname=NULL){
-
- # if(is.numeric(lon) | is.numeric(lat)) loc <- data.frame(x=lon,y=lat)
-  #if(!is.numeric(lon) | !is.numeric(lat)) loc  <- data.frame(x=weather.data[,lon],y=weather.data[,lat])
-  #if(is.null(env.id)) env <- paste0('env_',1:length(lat))
-  #if(!is.null(weather.data) | !is.null(env.id)) env <- weather.data[,env.id]
-
-  #coordinates(loc)= ~x+y
-  #proj4string(loc) = CRS("+proj=longlat +datum=WGS84")
-
-  #for(i in 1:length(names(raster))) env = cbind(env,data.frame(extract(raster[[i]], loc)))
-  #names(env)[-1] = names(raster)
-  #env<-data.frame(unique(env))
-  #if(!is.null(covname)) names(env)[!names(env) %in% 'env'] <- covname
-  #return(merge(env,weather.data,by='env'))
-#}
